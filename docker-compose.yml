@@ -1,0 +1,36 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: websystem-docker-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/conf.d/nginx.conf
+    depends_on:
+      - frontend
+      - api
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile.prod
+    container_name: realworld-docker-frontend
+    command: serve -s build -l 3000
+    restart: unless-stopped
+  api:
+    build: ./api
+    command: npm run start
+    environment:
+    - PORT=8080
+    - HOST=http://localhost
+    - MONGO_URL=mongodb://api_db:27017/api
+    depends_on:
+      - api_db
+  api_db:
+    image: mongo:latest
+    volumes:
+      - mongodb_api:/data/db
+
+volumes:
+  mongodb_api:
